@@ -75,6 +75,9 @@ struct InfiniteStackedCardView: View {
     var trailingCards: CGFloat
     var trailingSpacePerCard: CGFloat
     
+    @GestureState var isDragging: Bool = false
+    @State var offset: CGFloat = .zero
+    
     var body: some View {
         
         VStack(alignment: .leading, spacing: 15) {
@@ -99,7 +102,6 @@ struct InfiniteStackedCardView: View {
         .padding()
         .padding(.vertical, 10)
         .foregroundColor(Color.white)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 25)
                 .fill(card.cardColor)
@@ -107,6 +109,28 @@ struct InfiniteStackedCardView: View {
         .padding(.trailing, -getPadding())
         .padding(.vertical, getPadding())
         .zIndex(Double(CGFloat(cards.count) - getIndex()))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
+        .offset(x: offset)
+        .gesture(
+            DragGesture()
+                .updating($isDragging, body: { _, out, _ in
+                    out = true
+                })
+                .onChanged({ value in
+                    var translation = value.translation.width
+                    translation = cards.first?.id == card.id ? translation : 0
+                    translation = isDragging ? translation : 0
+                    // MARK: Stopping right swipe
+                    translation = (translation < 0 ? translation : 0)
+                    offset = translation
+                })
+                .onEnded({ value in
+                    withAnimation {
+                        offset = .zero
+                    }
+                })
+        )
     }
     // MARK: Retrieve padding for each card
     func getPadding() -> CGFloat {
