@@ -104,7 +104,24 @@ struct InfiniteStackedCardView: View {
             RoundedRectangle(cornerRadius: 25)
                 .fill(card.cardColor)
         )
+        .padding(.trailing, -getPadding())
+        .padding(.vertical, getPadding())
+        .zIndex(Double(CGFloat(cards.count) - getIndex()))
+    }
+    // MARK: Retrieve padding for each card
+    func getPadding() -> CGFloat {
+        let maxPadding = trailingCards * trailingSpacePerCard
+        let cardPadding = getIndex() * trailingSpacePerCard
+        
+        return (getIndex() <= trailingCards ? cardPadding : maxPadding)
     }
     
-    
+    // MARK: Index for card to show
+    func getIndex() -> CGFloat {
+        let index = cards.firstIndex { card in
+            return self.card.id == card.id
+        } ?? 0
+        
+        return CGFloat(index)
+    }
 }
