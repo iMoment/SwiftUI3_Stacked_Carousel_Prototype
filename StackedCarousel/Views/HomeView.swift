@@ -109,6 +109,7 @@ struct InfiniteStackedCardView: View {
         .padding(.trailing, -getPadding())
         .padding(.vertical, getPadding())
         .zIndex(Double(CGFloat(cards.count) - getIndex()))
+        .rotationEffect(.init(degrees: getRotation(angle: 10)))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .offset(x: offset)
@@ -126,12 +127,43 @@ struct InfiniteStackedCardView: View {
                     offset = translation
                 })
                 .onEnded({ value in
-                    withAnimation {
-                        offset = .zero
+                    // MARK: Check card offset relative to width
+                    let width = UIScreen.main.bounds.width
+                    let cardPassed = -offset > (width / 2)
+                    
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if cardPassed {
+                            offset = -width
+                            removeAndInsertAtBack()
+                        } else {
+                            offset = .zero
+                        }
                     }
                 })
         )
     }
+    // MARK: Removing front card and relocating to back for infinite stacked carousel
+    func removeAndInsertAtBack() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            var updatedCard = card
+            updatedCard.id = UUID().uuidString
+            
+            cards.append(updatedCard)
+            
+            withAnimation {
+                cards.removeFirst()
+            }
+        }
+    }
+    
+    // MARK: Card rotation during drag
+    func getRotation(angle: Double) -> Double {
+        let width = UIScreen.main.bounds.width - 50
+        let progress = offset / width
+        
+        return Double(progress) * angle
+    }
+    
     // MARK: Retrieve padding for each card
     func getPadding() -> CGFloat {
         let maxPadding = trailingCards * trailingSpacePerCard
