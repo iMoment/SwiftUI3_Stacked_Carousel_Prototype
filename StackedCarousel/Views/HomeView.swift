@@ -16,6 +16,13 @@ struct HomeView: View {
         Card(cardColor: Color("customYellow"), date: "Thursday 24th February", title: "Light walking for 20 minutes."),
     ]
     
+    // MARK: Detail Hero Page
+    @State var showDetailPage: Bool = false
+    @State var currentCard: Card?
+    
+    @Namespace var animation
+    @State var showDetailContent: Bool = false
+    
     var body: some View {
         
         VStack {
@@ -49,7 +56,20 @@ struct HomeView: View {
                 ZStack {
                     
                     ForEach(cards) { card in
-                        InfiniteStackedCardView(cards: $cards, card: card, trailingCards: trailingCards, trailingSpacePerCard: trailingSpacePerCard)
+                        InfiniteStackedCardView(
+                            cards: $cards,
+                            card: card,
+                            trailingCards: trailingCards,
+                            trailingSpacePerCard: trailingSpacePerCard,
+                            animation: animation,
+                            showDetailPage: $showDetailPage)
+                        // MARK: Showing Detail Page on Tap
+                            .onTapGesture {
+                                withAnimation(.spring()) {
+                                    currentCard = card
+                                    showDetailPage = true
+                                }
+                            }
                     }
                 }
                 .padding(.leading, 10)
@@ -60,6 +80,61 @@ struct HomeView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .overlay(
+             DetailViewPage()
+        )
+    }
+    // MARK: Detail View Page
+    @ViewBuilder
+    func DetailViewPage() -> some View {
+        ZStack {
+            if let currentCard = currentCard, showDetailPage {
+                Rectangle()
+                    .fill(currentCard.cardColor)
+                    .matchedGeometryEffect(id: currentCard.id, in: animation)
+                    .ignoresSafeArea()
+                
+                VStack(alignment: .leading, spacing: 15) {
+                    Button {
+                        withAnimation {
+                            showDetailContent = false
+                            showDetailPage = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundColor(Color.black)
+                            .padding(10)
+                            .background(Color.white.opacity(0.6))
+                            .clipShape(Circle())
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Text(currentCard.date)
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .padding(.top)
+                    
+                    Text(currentCard.title)
+                        .font(.title.bold())
+                    
+                    ScrollView(.vertical, showsIndicators: false) {
+                        Text(content)
+                            .padding(.top)
+                    }
+                }
+                .opacity(showDetailContent ? 1 : 0)
+                .foregroundColor(Color.white)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation {
+                            showDetailContent = true
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -74,6 +149,10 @@ struct InfiniteStackedCardView: View {
     var card: Card
     var trailingCards: CGFloat
     var trailingSpacePerCard: CGFloat
+    
+    // MARK: For Hero Animation
+    var animation: Namespace.ID
+    @Binding var showDetailPage: Bool
     
     @GestureState var isDragging: Bool = false
     @State var offset: CGFloat = .zero
@@ -103,8 +182,12 @@ struct InfiniteStackedCardView: View {
         .padding(.vertical, 10)
         .foregroundColor(Color.white)
         .background(
-            RoundedRectangle(cornerRadius: 25)
-                .fill(card.cardColor)
+            ZStack {
+                // Matched Geometry effect doesn't animate smoothly when hiding original content
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(card.cardColor)
+                    .matchedGeometryEffect(id: card.id, in: animation)
+            }
         )
         .padding(.trailing, -getPadding())
         .padding(.vertical, getPadding())
@@ -181,3 +264,5 @@ struct InfiniteStackedCardView: View {
         return CGFloat(index)
     }
 }
+
+let content = "Velit dignissim sodales ut eu. Et odio pellentesque diam volutpat commodo sed egestas. Justo donec enim diam vulputate ut. Tellus pellentesque eu tincidunt tortor aliquam nulla facilisi cras. Quam adipiscing vitae proin sagittis. Habitasse platea dictumst quisque sagittis purus sit amet. Eget egestas purus viverra accumsan in nisl nisi scelerisque eu. Suscipit adipiscing bibendum est ultricies. Ut diam quam nulla porttitor massa. Morbi enim nunc faucibus a. At urna condimentum mattis pellentesque id. Nibh mauris cursus mattis molestie a iaculis at. Eu turpis egestas pretium aenean. Maecenas volutpat blandit aliquam etiam. Scelerisque purus semper eget duis at tellus. Cras fermentum odio eu feugiat pretium nibh. Urna id volutpat lacus laoreet non. Aliquet porttitor lacus luctus accumsan. Interdum consectetur libero id faucibus nisl tincidunt eget. Phasellus faucibus scelerisque eleifend donec pretium."
