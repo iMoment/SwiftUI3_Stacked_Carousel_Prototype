@@ -42,7 +42,20 @@ struct HomeView: View {
             }
             
             GeometryReader { proxy in
+                let size = proxy.size
+                let trailingCards: CGFloat = 2
+                let trailingSpacePerCard: CGFloat = 20
                 
+                ZStack {
+                    
+                    ForEach(cards) { card in
+                        InfiniteStackedCardView(cards: $cards, card: card, trailingCards: trailingCards, trailingSpacePerCard: trailingSpacePerCard)
+                    }
+                }
+                .padding(.leading, 10)
+                .padding(.trailing, (trailingCards * trailingSpacePerCard))
+                .frame(height: size.height / 1.6)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
         .padding()
@@ -54,4 +67,44 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
     }
+}
+
+struct InfiniteStackedCardView: View {
+    @Binding var cards: [Card]
+    var card: Card
+    var trailingCards: CGFloat
+    var trailingSpacePerCard: CGFloat
+    
+    var body: some View {
+        
+        VStack(alignment: .leading, spacing: 15) {
+            Text(card.date)
+                .font(.caption)
+                .fontWeight(.semibold)
+            
+            Text(card.title)
+                .font(.title.bold())
+                .padding(.top)
+            
+            Spacer()
+            
+            Label {
+                Image(systemName: "arrow.right")
+            } icon: {
+                Text("Read More")
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding()
+        .padding(.vertical, 10)
+        .foregroundColor(Color.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 25)
+                .fill(card.cardColor)
+        )
+    }
+    
+    
 }
